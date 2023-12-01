@@ -68,7 +68,6 @@ def getNeighborSet(coord: tuple[int,int]):
 	neighbors = [(coord[0]+x, coord[1]+y) for x,y in offsets]
 	neighbors = list(filter(inBounds, neighbors))
 
-	print(neighbors)
 	return neighbors
 
 if __name__ == "__main__":

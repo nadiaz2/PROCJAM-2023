@@ -1,5 +1,9 @@
+# The following link taught us a majority of what we have learned about the wave function collapse algorithm.
+# We drew heavy insperation from this article and used the author's Rust code as a basis for our implementation.
+# https://www.gridbugs.org/wave-function-collapse/
+
 from dataclasses import dataclass
-import heapq
+from heapq import heappush, heappop, heapify
 import random
 
 @dataclass
@@ -7,22 +11,23 @@ class TileCell:
 	"""Class for keeping track of the state of individual cells in the grid."""
 	collapsed: bool
 	possible: list
-	entropy_noise: float
+	_entropy_noise: float
 
 	def __init__(self, tileSetSize):
 		self.collapsed = False
 		self.possible = [True]*tileSetSize
-		self.entropy_noise = random.random() / 1000
+		self._entropy_noise = random.random() / 1000
 
-@dataclass
-class Grid:
-	"""The entire grid of cells. Contains redundant information to make access easier (ex. size)"""
-	cells: list[list[TileCell]]
-	size: tuple[int,int]
+	def entropy(self):
+		"""Returns the current entropy of this cell."""
+		# TODO: Impelment entropy calculation
+		return self._entropy_noise
 
-	def __init__(self, width, height, tileSetSize):
-		self.size = (width, height)
-		self.cells = [[TileCell(tileSetSize)]*height]*width
+	def updateEntropy(self):
+		"""Checks how tiles are possible for this cell and updates 'possible' list accordingly.
+		Returns True if the posibilities have changed, False otherwise."""
+		# TODO: Implement possibility update
+		return False
 
 @dataclass(frozen = True, order = True)
 class EntropyCoord:
@@ -30,9 +35,26 @@ class EntropyCoord:
 	entropy: float
 	coord: tuple[int, int]
 
+@dataclass
+class Grid:
+	"""The entire grid of cells. Contains redundant information to make access easier (ex. size)"""
+	cells: list[list[TileCell]]
+	size: tuple[int,int]
+	heap: list[EntropyCoord]
+
+	def __init__(self, width, height, tileSetSize):
+		self.size = (width, height)
+		self.cells = [[None]*height]*width
+		self.heap = []
+
+		for x in range(width):
+			for y in range(height):
+				cell = TileCell(tileSetSize)
+				self.cells[x][y] = cell
+				heappush(self.heap, EntropyCoord(cell.entropy(), (x,y)))
+
 
 tileGrid: Grid = None
-entropyHeap = list()
 
 def Main():
 	#global entropyHeap
@@ -40,17 +62,13 @@ def Main():
 	#heapq.heappush(entropyHeap, EntropyCoord(10.0, (0,0))) #inserts the given element into entropyHeap, assuming heap structure
 	#heapq.heappop(entropyHeap) #pops the smallest element off the heap and maintains heap structure
 
-	#for x in range(size[0]):
-	#	for y in range(size[1]):
-	#		heapq.heappush(entropyHeap, EntropyCoord(random.random()*100, (x,y)))
-
-	#heapq.heappush(entropyHeap, EntropyCoord(10.0, (0,0)))
-	#print(heapq.heappop(entropyHeap))
 	global tileGrid
 	tileGrid = Grid(200, 200, 5)
-	print("done")
-	#for i in range(len(entropyHeap)):
-	#	print(heapq.heappop(entropyHeap))
+
+	for i in range(len(tileGrid.heap)):
+		print(heappop(tileGrid.heap))
+
+	print('done')
 
 def getNeighborSet(coord: tuple[int,int]):
 	def inBounds(variable):

@@ -1,2 +1,3 @@
 /.venv
 /PROCJAM.code-workspace
+__pycache__/

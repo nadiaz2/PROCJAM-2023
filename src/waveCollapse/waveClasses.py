@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from heapq import heappush, heappop
-import random
+from random import random
+from waveExceptions import *
 
 
 class TileCell:
@@ -12,7 +13,7 @@ class TileCell:
 	def __init__(self, tileSetSize):
 		self.collapsed = False
 		self.possible = [True]*tileSetSize
-		self._entropy_noise = random.random() / 1000
+		self._entropy_noise = random() / 1000
 
 	def entropy(self) -> float:
 		"""Returns the current entropy of this cell."""
@@ -33,16 +34,17 @@ class EntropyCoord:
 	coord: tuple[int, int]
 
 
-class Heap:
-	_heap: list
+class EntropyHeap:
+	"""Maintains the heap of entropy values for cells"""
+	_heap: list[EntropyCoord]
 
 	def __init__(self):
 		self._heap = []
 
-	def push(self, item):
+	def push(self, item: EntropyCoord):
 		heappush(self._heap, item)
 
-	def pop(self):
+	def pop(self) -> EntropyCoord:
 		return heappop(self._heap)
 
 	def __iter__(self):
@@ -59,15 +61,30 @@ class Grid:
 	"""The entire grid of cells. Contains redundant information to make access easier (ex. size)"""
 	cells: list[list[TileCell]]
 	size: tuple[int,int]
-	heap: Heap
+	heap: EntropyHeap
 
 	def __init__(self, width, height, tileSetSize):
 		self.size = (width, height)
-		self.cells = [[None]*height]*width
-		self.heap = Heap()
+		#self.cells = [[None]*height]*width
+		self.cells = [[None for i in range(height)] for j in range(width)]
+		self.heap = EntropyHeap()
 
 		for x in range(width):
 			for y in range(height):
 				cell = TileCell(tileSetSize)
 				self.cells[x][y] = cell
 				self.heap.push(EntropyCoord(cell.entropy(), (x,y)))
+
+	def getFinalTileList(self) -> list[list[int]]:
+		width, height = self.size
+		
+		tiles = [[None for _ in range(height)] for _ in range(width)]
+
+		for x in range(width):
+			for y in range(height):
+				if(self.cells[x][y].collapsed):
+					tiles[x][y] = self.cells[x][y].possible[0]
+				else:
+					raise NotReadyException("Not all cells have been collapsed.")
+		
+		return tiles

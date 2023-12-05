@@ -3,7 +3,6 @@
 # https://www.gridbugs.org/wave-function-collapse/
 
 from waveClasses import Grid
-from random import randint
 
 
 def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tuple[int,int]]:
@@ -26,51 +25,36 @@ def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tup
 	return neighbors
 
 
-def wfc_core(tileSetSize: int, adjacencyRules, frequencyRules, outputSize: tuple[int,int]):
-	tileGrid = Grid(outputSize[0], outputSize[1], tileSetSize)
+def wfc_core(adjacencyRules, frequencyRules: list[int], outputSize: tuple[int,int]):
+	tileGrid = Grid(outputSize[0], outputSize[1], frequencyRules)
 
 	for item in tileGrid.heap:
 		x, y = item.coord
-		if(not tileGrid.cells[x][y].collapsed):
-			_collapseCell(tileGrid, item.coord, frequencyRules)
+		if(tileGrid.cells[x][y].collapsed):
+			continue
+		
+		success = tileGrid.cells[x][y].collapse(frequencyRules)
+		if(not success):
+			#restart
+			...
 	
-	tileList = tileGrid.getFinalTileList()
+	return tileGrid.getFinalTileList()
+
+
+def _updatePossible(tileGrid: Grid, coord: tuple[int,int], adjacencyRules):
+	...
+	for cell in _getNeighborSet(coord, tileGrid.size):
+		cell.updateEntropy()
+
+
+if __name__ == "__main__":
+	tileList = wfc_core(None, [1,2,3,4,5], (10,10))
+
 	output = ""
-	for y in range(tileGrid.size[1]):
-		for x in range(tileGrid.size[0]):
+	for y in range(len(tileList[0])):
+		for x in range(len(tileList)):
 			output += str(tileList[x][y]) + " "
 		output += '\n'
 	print(output)
 
-
-def _collapseCell(tileGrid: Grid, coord: tuple[int,int], frequencyHints: list[int]) -> bool:
-	x, y = coord
-	cell = tileGrid.cells[x][y]
-	
-	weightedList = []
-	for i, possible in enumerate(cell.possible):
-		if(not possible):
-			continue
-		
-		for _ in range(frequencyHints[i]):
-			weightedList.append(i)
-	
-	if(len(weightedList) == 0):
-		return False
-
-	cell.chosenTile = weightedList[randint(0, len(weightedList)-1)]
-	cell.possible = [cell.chosenTile]
-
-def _updatePossible(tileGrid: Grid, coord: tuple[int,int], adjacencyRules):
-	...
-
-
-if __name__ == "__main__":
-	#tileGrid = Grid(200, 200, 5)
-
-	#for item in tileGrid.heap:
-	#	print(item)
-
-	#print('done')
-	wfc_core(5, None, [1,2,3,4,5], (10,10))
-	#print(_getNeighborSet((1,1), (3,3)))
+	print(_getNeighborSet((1,1), (3,3)))

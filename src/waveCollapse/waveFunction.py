@@ -5,7 +5,26 @@
 from waveClasses import *
 
 
-def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None, printOutput: bool = False):
+def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None, printOutput: bool = False) -> list[list[int]]:
+	MAX_FAILS = 10
+	fails = 0
+	tileOutput = None
+	while((fails < MAX_FAILS) and (tileOutput == None)):
+		try:
+			gridSeed, tileOutput = _runGeneration(adjacencyRules, frequencyRules, outputSize, seed)
+		except ContradictionException:
+			fails += 1
+			if(printOutput):
+				print('Fail!')
+
+	if(printOutput):
+		print(f'SEED: {gridSeed}')
+		_printTileList(tileOutput)
+	
+	return tileOutput
+
+
+def _runGeneration(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int) -> tuple[int, list[list[int]]]:
 	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, seed)
 	removalStack: list[RemovalUpdate] = []
 
@@ -19,8 +38,7 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 		oldPossible = cell.possible
 		success = cell.collapse(frequencyRules)
 		if(not success):
-			# TODO: restart
-			raise NotImplementedError("Yet to implement redo or abort on contradiction.")
+			raise ContradictionException("A cell ran out of possibilities during generation.")
 
 		# Begin propogation
 		oldPossible[cell.chosenTile] = False  # the chosen tile is still a valid enabler
@@ -30,13 +48,7 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 
 		_updatePossible(tileGrid, removalStack, adjacencyRules, frequencyRules)
 
-	output = tileGrid.getFinalTileList()
-
-	if(printOutput):
-		print(f'SEED: {tileGrid.seed}')
-		_printTileList(output)
-	
-	return output
+	return (tileGrid.seed, tileGrid.getFinalTileList())
 
 
 def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tuple[Direction, tuple[int,int]]]:
@@ -86,6 +98,10 @@ def _updatePossible(tileGrid: Grid, removalStack: list[RemovalUpdate], adjacency
 
 
 def _printTileList(tileList):
+	if(tileList == None):
+		print('tileList is None\n')
+		return
+
 	output = ""
 	for y in range(len(tileList[0])):
 		for x in range(len(tileList)):
@@ -96,10 +112,13 @@ def _printTileList(tileList):
 if __name__ == "__main__":
 	wfc_core(
 		[
-			([0], [0,1], [0,1], [0,1]),
-			([0,1], [0,1], [1], [0,1])
+			([0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4], [0,1,2,3,4]),
+			([0,3], [0,2], [0,3], [0,2]),
+			([0,4], [0,1], [0,4], [0,1]),
+			([0,1], [0], [0,1], [0]),
+			([0,2], [0], [0,2], [0])
 		],
-		[1, 2],
+		[1, 5, 5, 5, 5],
 		(20, 10),
 		seed=None,
 		printOutput=True

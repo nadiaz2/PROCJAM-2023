@@ -5,8 +5,8 @@
 from waveClasses import *
 
 
-def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int]):
-	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, given_seed=1701893307)
+def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None):
+	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, seed)
 	removalStack: list[RemovalUpdate] = []
 
 	for item in tileGrid.heap:
@@ -18,7 +18,7 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 		# Collapse chosen cell
 		oldPossible = cell.possible
 		success = cell.collapse(frequencyRules)
-		_printTileList(tileGrid.getFinalTileList())
+		#_printTileList(tileGrid.getFinalTileList())
 		if(not success):
 			# TODO: restart
 			raise NotImplementedError("Yet to implement redo or abort on contradiction.")
@@ -57,26 +57,27 @@ def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tup
 def _updatePossible(tileGrid: Grid, removalStack: list[RemovalUpdate], adjacencyRules: list[tuple[list[int]]], frequencyHints: list[int]):
 	while(len(removalStack) > 0):
 		removal = removalStack.pop()
-		tileIndex = removal.tileIndex
+		tileRemoved = removal.tileIndex
 		coord = removal.coord
-		for dir,cellCoord in _getNeighborSet(coord, tileGrid.size):
-			x,y = cellCoord
-			cell = tileGrid.cells[x][y]
+		for dir,neighborCoord in _getNeighborSet(coord, tileGrid.size):
+			x,y = neighborCoord
+			neighborCell = tileGrid.cells[x][y]
+			oppositeDir = (dir.value+2) % 4
 
-			if(cell.collapsed):
+			if(neighborCell.collapsed):
 				continue
 
-			# for all tiles that tileIndex enables via adjacencyRules
-			for enabledTile in adjacencyRules[tileIndex][dir.value]:
-				if(not cell.possible[enabledTile]):
+			# for all tiles that tileRemoved enables via adjacencyRules
+			for enabledTile in adjacencyRules[tileRemoved][dir.value]:
+				if(not neighborCell.possible[enabledTile]):
 					continue
 
-				cell.tile_enabler_counts[enabledTile][(dir.value+2) % 4] -= 1
+				neighborCell.tile_enabler_counts[enabledTile][oppositeDir] -= 1
 
-				if(cell.tile_enabler_counts[enabledTile][(dir.value+2) % 4] == 0):
-					cell.removeTile(enabledTile, frequencyHints)
-					removalStack.append(RemovalUpdate(enabledTile, cellCoord))
-					tileGrid.heap.push(EntropyCoord(cell.entropy(), cellCoord))
+				if(neighborCell.tile_enabler_counts[enabledTile][oppositeDir] == 0):
+					neighborCell.removeTile(enabledTile, frequencyHints)
+					tileGrid.heap.push(EntropyCoord(neighborCell.entropy(), neighborCoord))
+					removalStack.append(RemovalUpdate(enabledTile, neighborCoord))
 
 
 def _printTileList(tileList):
@@ -88,7 +89,10 @@ def _printTileList(tileList):
 	print(output)
 
 if __name__ == "__main__":
-	tileList = wfc_core([([0,1],[0,1],[0,1],[0]),([0,1],[0,1],[0,1],[0,1])], [1,1], (3,3))
+	tileList = wfc_core([
+		([0],[0,1],[0,1],[0,1]),
+		([0,1],[0,1],[1],[0,1])
+	], [1,1], (10,10))
 	_printTileList(tileList)
 
-	print(_getNeighborSet((1,1), (3,3)))
+	#print(_getNeighborSet((1,1), (3,3)))

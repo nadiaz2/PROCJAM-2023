@@ -131,24 +131,34 @@ class Grid:
 				if(self.cells[x][y].collapsed):
 					tiles[x][y] = self.cells[x][y].chosenTile
 				else:
-					tiles[x][y] = 9
-					#raise NotReadyException("Not all cells have been collapsed.")
+					#tiles[x][y] = 9
+					raise NotReadyException("Not all cells have been collapsed.")
 		
 		return tiles
 	
 	@staticmethod
 	def _getDefaultEnablers(adjacencyRules: list[tuple[list[int]]]) -> list[list[int]]:
 		tile_count = len(adjacencyRules)
-		defaultEnableers = [[0,0,0,0] for i in range(tile_count)]
+		defaultEnablers = [[0,0,0,0] for _ in range(tile_count)]
 
+		# This for loop calculates the number of tiles that enable each tile from a specific direction.
+		# For example, defaultEnablers[tile_a][Direction.RIGHT.value] would be the number of possibilities
+		# from the RIGHT side that allow tile_a to exist in a given cell.
+		#
+		# This calculation relies on the adjacencyRules being consistent. This means that if tile_a
+		# enables tile_b to be placed on its left, then tile_b must also enable tile_a to be placed
+		# on its right. Therefore the number of tiles that tile_a enables in a given direction is equal
+		# to the number of tiles that enable it from the opposite direction.
 		for index in range(tile_count):
 			for dir in Direction:
-				defaultEnableers[index][dir.value] = len(adjacencyRules[index][dir.value])
+				defaultEnablers[index][dir.value] = len(adjacencyRules[index][dir.value])
 		
-		return defaultEnableers
+		return defaultEnablers
 
 
 @dataclass
 class RemovalUpdate:
+	"""Represents that the stored tileIndex was removed from the possibilities
+	of the cell at the stored coordinate."""
 	tileIndex: int
 	coord: tuple[int,int]

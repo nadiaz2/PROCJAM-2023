@@ -1,8 +1,5 @@
 from PIL import Image
-import os
-import io
-import math
-import numpy
+from math import floor
 from copy import deepcopy
 import sys
 sys.path.append('src/utils')
@@ -41,7 +38,7 @@ def createTileSet (image : Image) -> tuple[list[Tile], list[int]]:
 		tempPixels = [[None, None, None],[None, None, None],[None, None, None]]
 		for xOffset, yOffset in OFFSET:
 			x = (i + xOffset) % width
-			y = (math.floor(i / width) + yOffset) % height
+			y = (floor(i / width) + yOffset) % height
 			tempPixels[xOffset][yOffset] = pixel_vals[y * width + x]
 		
 		flag = False
@@ -61,26 +58,32 @@ def createTileSet (image : Image) -> tuple[list[Tile], list[int]]:
 					tempTile = Tile(len(all_tiles), matrix)
 					all_tiles.append(tempTile)
 					frequency_list.append(1)
-
 		
 	return (all_tiles, frequency_list)
-	
+
+
 def createAdjacency (tileSet : list):
 	adjacencyTable = [([],[],[],[]) for _ in range(len(tileSet))]
 	for tile in tileSet:
 		tempTile = tile.pixels
-		for adjacentTile in tileSet:
+
+		for adjacentTile in tileSet[tile.index:]:
 			tempAdjacentTile = adjacentTile.pixels
+
 			for dir in Direction:
 				tempTile = _rotateMatrix(tempTile)
 				tempAdjacentTile = _rotateMatrix(tempAdjacentTile)
+
 				if _checkValid(tempTile, tempAdjacentTile):
 					adjacencyTable[tile.index][dir.value].append(adjacentTile.index)
+					adjacencyTable[adjacentTile.index][(dir.value+2) % 4].append(tile.index)
+
 	return adjacencyTable
 
 
 def _checkValid(tile, adjacent):
-	return tile[1] == adjacent[0] and tile[2] == adjacent[1]
+	return (tile[1] == adjacent[0]) and (tile[2] == adjacent[1])
+
 
 def _rotateMatrix(matrix):
 	copy = deepcopy(matrix)
@@ -99,15 +102,12 @@ def _rotateMatrix(matrix):
 
 	return copy
 
+
 def _reflectMirror(matrix):
 	"""Returns a copy of the given matrix that is reflected over the vertical axis."""
 	copy = deepcopy(matrix)
-
-	for y in range(3):
-		copy[0][y], copy[2][y] = copy[2][y], copy[0][y]
-	
+	copy[0], copy[2] = copy[2], copy[0]
 	return copy
-
 
 
 if __name__ == "__main__":

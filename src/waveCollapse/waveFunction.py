@@ -13,28 +13,35 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 	tileOutput = None
 	while((fails < MAX_FAILS) and (tileOutput == None)):
 		try:
-			gridSeed, tileOutput = _runGeneration(adjacencyRules, frequencyRules, outputSize, seed)
+			gridSeed, tileOutput = _runGeneration(adjacencyRules, frequencyRules, outputSize, seed, printOutput)
 		except ContradictionException:
 			fails += 1
 			if(printOutput):
-				print('Fail!')
+				print('\nFail!')
 
 	if(printOutput):
-		print(f'SEED: {gridSeed}')
-		_printTileList(tileOutput)
+		print(f'\nSEED: {gridSeed}')
+		#_printTileList(tileOutput)
 	
 	return tileOutput
 
 
-def _runGeneration(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int) -> tuple[int, list[list[int]]]:
+def _runGeneration(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int, printOutput: bool) -> tuple[int, list[list[int]]]:
 	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, seed)
 	removalStack: list[RemovalUpdate] = []
+
+	collapsingCell = 0
+	totalCells = outputSize[0]*outputSize[1]
 
 	for item in tileGrid.heap:
 		x, y = item.coord
 		cell = tileGrid.cells[x][y]
 		if(cell.collapsed):
 			continue
+		
+		if(printOutput):
+			collapsingCell += 1
+			print(f'Collapsing Cell: {collapsingCell} / {totalCells}', end="\r", flush=True)
 		
 		# Collapse chosen cell
 		oldPossible = cell.possible
@@ -48,7 +55,10 @@ def _runGeneration(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[
 		# The stack should be empty at the moment. This just adds all needed RemovalUpdates
 		removalStack = [RemovalUpdate(index, item.coord) for index,pastPossible in enumerate(oldPossible) if pastPossible]
 
-		_updatePossible(tileGrid, removalStack, adjacencyRules, frequencyRules)
+		try:
+			_updatePossible(tileGrid, removalStack, adjacencyRules, frequencyRules)
+		except ValueError:
+			raise ContradictionException("A cell ran out of possibilities during generation.")
 
 	return (tileGrid.seed, tileGrid.getFinalTileList())
 

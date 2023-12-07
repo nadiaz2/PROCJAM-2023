@@ -2,6 +2,8 @@
 # We drew heavy insperation from this article and used the author's Rust code as a basis for our implementation.
 # https://www.gridbugs.org/wave-function-collapse/
 
+import sys
+sys.path.append('src/waveCollapse')
 from waveClasses import *
 
 

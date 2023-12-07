@@ -3,6 +3,10 @@ import os
 import io
 import math
 import numpy
+from copy import deepcopy
+import sys
+sys.path.append('src/utils')
+from direction import Direction
 
 def Main ():
 	...
@@ -20,11 +24,7 @@ class Tile:
 		if pixels == None:
 			self.pixels = [[None, None, None],[None, None, None],[None, None, None]]
 		else:
-			self.pixels = [[None, None, None],[None, None, None],[None, None, None]]
-			for i in range(len(pixels)):
-				x = i % 3
-				y = math.floor(i/3)
-				self.pixels[x][y] = pixels[i]
+			self.pixels = pixels
 	
 
 def createTileSet (image : Image) -> tuple[list[Tile], list[int]]:
@@ -38,12 +38,11 @@ def createTileSet (image : Image) -> tuple[list[Tile], list[int]]:
 
 	for i,pixel in enumerate(pixel_vals):
 
-		tempPixels = list()
+		tempPixels = [[None, None, None],[None, None, None],[None, None, None]]
 		for xOffset, yOffset in OFFSET:
 			x = (i + xOffset) % width
 			y = (math.floor(i / width) + yOffset) % height
-			tempPixels.append(pixel_vals[y * width + x])
-			#tempTile.pixels[xOffset][yOffset] = pixel_vals[y * width + x]
+			tempPixels[xOffset][yOffset] = pixel_vals[y * width + x]
 		
 		flag = False
 
@@ -53,25 +52,63 @@ def createTileSet (image : Image) -> tuple[list[Tile], list[int]]:
 				flag = True
 
 		if not flag:
-			array = numpy.array([tempPixels])
-			matrix = array.reshape(3, 3, 4)
+			matrix = tempPixels
 			# 4 rotations
 			for _ in range(0,4):
-				matrix = numpy.rot90(matrix, 1)
+				matrix = _rotateMatrix(matrix)
 				for _ in range(0,2):
-					matrix = numpy.flip(matrix, 0)
-					tileConfig = matrix.flatten().tolist()
-					it = iter(tileConfig)
-					tempTile = Tile(len(all_tiles), list(zip(it, it, it, it)))
+					matrix = _reflectMirror(matrix)
+					tempTile = Tile(len(all_tiles), matrix)
 					all_tiles.append(tempTile)
 					frequency_list.append(1)
-			break
-		break
-	
+
+		
 	return (all_tiles, frequency_list)
 	
-def _createAdjacency ():
-	...
+def createAdjacency (tileSet : list):
+	adjacencyTable = [([],[],[],[]) for _ in range(len(tileSet))]
+	for tile in tileSet:
+		tempTile = tile.pixels
+		for adjacentTile in tileSet:
+			tempAdjacentTile = adjacentTile.pixels
+			for dir in Direction:
+				tempTile = _rotateMatrix(tempTile)
+				tempAdjacentTile = _rotateMatrix(tempAdjacentTile)
+				if _checkValid(tempTile, tempAdjacentTile):
+					adjacencyTable[tile.index][dir.value].append(adjacentTile.index)
+	return adjacencyTable
+
+
+def _checkValid(tile, adjacent):
+	return tile[1] == adjacent[0] and tile[2] == adjacent[1]
+
+def _rotateMatrix(matrix):
+	copy = deepcopy(matrix)
+
+	# rotate corners
+	copy[0][0] = matrix[0][2]
+	copy[0][2] = matrix[2][2]
+	copy[2][2] = matrix[2][0]
+	copy[2][0] = matrix[0][0]
+	
+	# rotate sides
+	copy[1][0] = matrix[0][1]
+	copy[0][1] = matrix[1][2]
+	copy[1][2] = matrix[2][1]
+	copy[2][1] = matrix[1][0]
+
+	return copy
+
+def _reflectMirror(matrix):
+	"""Returns a copy of the given matrix that is reflected over the vertical axis."""
+	copy = deepcopy(matrix)
+
+	for y in range(3):
+		copy[0][y], copy[2][y] = copy[2][y], copy[0][y]
+	
+	return copy
+
+
 
 if __name__ == "__main__":
 	Main()

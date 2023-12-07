@@ -3,16 +3,12 @@ from heapq import heappush, heappop
 import random
 from waveExceptions import *
 from math import log2
-from enum import Enum
 from copy import deepcopy
 import time
+import sys
+sys.path.append('src/utils')
+from direction import Direction
 
-
-class Direction(Enum):
-	UP = 0
-	RIGHT = 1
-	DOWN = 2
-	LEFT = 3
 
 
 @dataclass

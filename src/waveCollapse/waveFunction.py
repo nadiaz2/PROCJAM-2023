@@ -56,14 +56,19 @@ def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tup
 	Coordinates that lie outside the given gridSize are not returned in the list."""
 	def inBounds(variable):
 		x, y = variable[1]
+		x, y = variable[1]
 
 		if(x >= gridSize[0] or x < 0):
+		if(x >= gridSize[0] or x < 0):
 			return False
+		if(y >= gridSize[1] or y < 0):
 		if(y >= gridSize[1] or y < 0):
 			return False
 		
 		return True
 
+	offsets = [(Direction.LEFT, (-1,0)), (Direction.RIGHT, (1,0)), (Direction.UP, (0,-1)), (Direction.DOWN, (0,1))]
+	neighbors = [(dir, (coord[0]+x, coord[1]+y)) for dir,(x,y) in offsets]
 	offsets = [(Direction.LEFT, (-1,0)), (Direction.RIGHT, (1,0)), (Direction.UP, (0,-1)), (Direction.DOWN, (0,1))]
 	neighbors = [(dir, (coord[0]+x, coord[1]+y)) for dir,(x,y) in offsets]
 	neighbors = list(filter(inBounds, neighbors))

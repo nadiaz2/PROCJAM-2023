@@ -5,7 +5,7 @@
 from waveClasses import *
 
 
-def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None):
+def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None, printOutput: bool = False):
 	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, seed)
 	removalStack: list[RemovalUpdate] = []
 
@@ -18,7 +18,6 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 		# Collapse chosen cell
 		oldPossible = cell.possible
 		success = cell.collapse(frequencyRules)
-		#_printTileList(tileGrid.getFinalTileList())
 		if(not success):
 			# TODO: restart
 			raise NotImplementedError("Yet to implement redo or abort on contradiction.")
@@ -30,8 +29,14 @@ def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], 
 		removalStack = [RemovalUpdate(index, item.coord) for index,pastPossible in enumerate(oldPossible) if pastPossible]
 
 		_updatePossible(tileGrid, removalStack, adjacencyRules, frequencyRules)
+
+	output = tileGrid.getFinalTileList()
+
+	if(printOutput):
+		print(f'SEED: {tileGrid.seed}')
+		_printTileList(output)
 	
-	return tileGrid.getFinalTileList()
+	return output
 
 
 def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tuple[Direction, tuple[int,int]]]:
@@ -89,10 +94,13 @@ def _printTileList(tileList):
 	print(output)
 
 if __name__ == "__main__":
-	tileList = wfc_core([
-		([0],[0,1],[0,1],[0,1]),
-		([0,1],[0,1],[1],[0,1])
-	], [1,1], (10,10))
-	_printTileList(tileList)
-
-	#print(_getNeighborSet((1,1), (3,3)))
+	wfc_core(
+		[
+			([0], [0,1], [0,1], [0,1]),
+			([0,1], [0,1], [1], [0,1])
+		],
+		[1, 2],
+		(20, 10),
+		seed=None,
+		printOutput=True
+	)

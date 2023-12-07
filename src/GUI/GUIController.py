@@ -2,8 +2,11 @@ from PIL import Image
 import PySimpleGUI as sg
 import os
 import io
+import sys
+sys.path.insert(0, 'src/preProcessor')
+from preProcessor import createTileSet
 
-file_types = [("PNG (*.png)", "*.png")]
+file_types = [('PNG (*.png)', '*.png')]
 
 def Main ():
 	sg.theme('Dark Blue 3')  # please make your windows colorful
@@ -26,9 +29,11 @@ def Main ():
 			window['-OUTPUT-'].update(values['-FILEPATH-'])
 			if os.path.exists(values['-FILEPATH-']):
 				image = Image.open(values["-FILEPATH-"])
-				image.thumbnail((200, 200))
+				pixels = createTileSet(image)
+				#print(pixels)
+				imNew = image.resize((300, 300), Image.NEAREST)
 				bio = io.BytesIO()
-				image.save(bio, format="PNG")
+				imNew.save(bio, format="PNG")
 				window["-IMAGE-"].update(data=bio.getvalue())
 	
 	window.close()

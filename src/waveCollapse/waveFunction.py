@@ -59,9 +59,7 @@ def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tup
 		x, y = variable[1]
 
 		if(x >= gridSize[0] or x < 0):
-		if(x >= gridSize[0] or x < 0):
 			return False
-		if(y >= gridSize[1] or y < 0):
 		if(y >= gridSize[1] or y < 0):
 			return False
 		

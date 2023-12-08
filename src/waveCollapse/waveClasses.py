@@ -4,7 +4,6 @@ import random
 from waveExceptions import *
 from math import log2
 from copy import deepcopy
-from threading import Thread, Lock
 import time
 import sys
 sys.path.append('src/utils')

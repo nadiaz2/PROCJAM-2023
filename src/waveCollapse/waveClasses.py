@@ -106,11 +106,13 @@ class Grid:
 	"""The entire grid of cells. Contains redundant information to make access easier (ex. size)"""
 	cells: list[list[TileCell]]
 	size: tuple[int,int]
+	cellsCollapsed: int
 	heap: EntropyHeap
 	seed: int
 
 	def __init__(self, width: int, height: int, adjacencyRules: list[tuple(list[int])], frequencyHints: list[int], given_seed: int = None):
 		self.size = (width, height)
+		self.cellsCollapsed = 0
 		self.cells = [[None for i in range(height)] for j in range(width)]
 		self.heap = EntropyHeap()
 		

@@ -30,28 +30,15 @@ class EntropyCoord:
 class EntropyHeap:
 	"""Maintains the heap of entropy values for cells"""
 	_heap: list[EntropyCoord]
-	_lock: Lock
 
 	def __init__(self):
 		self._heap = []
-		self._lock = Lock()
 
 	def push(self, item: EntropyCoord):
-		self._lock.acquire()
 		heappush(self._heap, item)
-		self._lock.release()
-
-	def pushAll(self, items: list[EntropyCoord]):
-		self._lock.acquire()
-		for item in items:
-			heappush(self._heap, item)
-		self._lock.release()
 
 	def pop(self) -> EntropyCoord:
-		self._lock.acquire()
-		popped = heappop(self._heap)
-		self._lock.release()
-		return popped
+		return heappop(self._heap)
 
 	def __iter__(self):
 		return self
@@ -137,21 +124,11 @@ class Grid:
 
 		defaultEnablers = Grid._getDefaultEnablers(adjacencyRules)
 
-		def _initCells(obj: Grid, x: int):
-			entropies = []
+		for x in range(width):
 			for y in range(height):
 				cell = TileCell(frequencyHints, defaultEnablers)
-				obj.cells[x][y] = cell
-				entropies.append(EntropyCoord(cell.entropy(), (x,y)))
-			obj.heap.pushAll(entropies)
-
-		thread_list: list[Thread] = []
-		for x in range(width):
-			thread_list.append(Thread(target=_initCells, args=(self, x)))
-			thread_list[x].start()
-
-		for x in range(width):
-			thread_list[x].join()
+				self.cells[x][y] = cell
+				self.heap.push(EntropyCoord(cell.entropy(), (x,y)))
 
 	def getFinalTileList(self) -> list[list[int]]:
 		width, height = self.size
@@ -180,17 +157,8 @@ class Grid:
 		# enables tile_b to be placed on its left, then tile_b must also enable tile_a to be placed
 		# on its right. Therefore the number of tiles that tile_a enables in a given direction is equal
 		# to the number of tiles that enable it from the opposite direction.
-
-		def initDirection(adjacencyRules, defaultEnablers, dir):
-			for index in range(len(adjacencyRules)):
+		for index in range(len(adjacencyRules)):
+			for dir in Direction:
 				defaultEnablers[index][dir.value] = len(adjacencyRules[index][dir.value])
-		
-		threads = [None, None, None, None]
-		for dir in Direction:
-			threads[dir.value] = Thread(target=initDirection, args=(adjacencyRules, defaultEnablers, dir))
-			threads[dir.value].start()
-		
-		for dir in Direction:
-			threads[dir.value].join()
 		
 		return defaultEnablers

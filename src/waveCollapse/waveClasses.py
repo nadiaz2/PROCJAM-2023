@@ -4,6 +4,7 @@ import random
 from waveExceptions import *
 from math import log2
 from copy import deepcopy
+from threading import Thread
 import time
 import sys
 sys.path.append('src/utils')
@@ -123,11 +124,19 @@ class Grid:
 
 		defaultEnablers = Grid._getDefaultEnablers(adjacencyRules)
 
-		for x in range(width):
+		def _initCells(x: int):
 			for y in range(height):
 				cell = TileCell(frequencyHints, defaultEnablers)
 				self.cells[x][y] = cell
 				self.heap.push(EntropyCoord(cell.entropy(), (x,y)))
+
+		thread_list: list[Thread] = []
+		for x in range(width):
+			thread_list.append(Thread(target=_initCells, args=(x)))
+			thread_list[x].start()
+
+		for x in range(width):
+			thread_list[x].join()
 
 	def getFinalTileList(self) -> list[list[int]]:
 		width, height = self.size

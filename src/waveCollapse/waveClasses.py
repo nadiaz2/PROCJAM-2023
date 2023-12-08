@@ -4,7 +4,7 @@ import random
 from waveExceptions import *
 from math import log2
 from copy import deepcopy
-from threading import Thread
+from threading import Thread, Lock
 import time
 import sys
 sys.path.append('src/utils')
@@ -30,15 +30,28 @@ class EntropyCoord:
 class EntropyHeap:
 	"""Maintains the heap of entropy values for cells"""
 	_heap: list[EntropyCoord]
+	_lock: Lock
 
 	def __init__(self):
 		self._heap = []
+		self._lock = Lock()
 
 	def push(self, item: EntropyCoord):
+		self._lock.acquire()
 		heappush(self._heap, item)
+		self._lock.release()
+
+	def pushAll(self, items: list[EntropyCoord]):
+		self._lock.acquire()
+		for item in items:
+			heappush(self._heap, item)
+		self._lock.release()
 
 	def pop(self) -> EntropyCoord:
-		return heappop(self._heap)
+		self._lock.acquire()
+		popped = heappop(self._heap)
+		self._lock.release()
+		return popped
 
 	def __iter__(self):
 		return self
@@ -124,15 +137,17 @@ class Grid:
 
 		defaultEnablers = Grid._getDefaultEnablers(adjacencyRules)
 
-		def _initCells(x: int):
+		def _initCells(obj: Grid, x: int):
+			entropies = []
 			for y in range(height):
 				cell = TileCell(frequencyHints, defaultEnablers)
-				self.cells[x][y] = cell
-				self.heap.push(EntropyCoord(cell.entropy(), (x,y)))
+				obj.cells[x][y] = cell
+				entropies.append(EntropyCoord(cell.entropy(), (x,y)))
+			obj.heap.pushAll(entropies)
 
 		thread_list: list[Thread] = []
 		for x in range(width):
-			thread_list.append(Thread(target=_initCells, args=(x)))
+			thread_list.append(Thread(target=_initCells, args=(self, x)))
 			thread_list[x].start()
 
 		for x in range(width):
@@ -165,8 +180,17 @@ class Grid:
 		# enables tile_b to be placed on its left, then tile_b must also enable tile_a to be placed
 		# on its right. Therefore the number of tiles that tile_a enables in a given direction is equal
 		# to the number of tiles that enable it from the opposite direction.
-		for index in range(tile_count):
-			for dir in Direction:
+
+		def initDirection(adjacencyRules, defaultEnablers, dir):
+			for index in range(len(adjacencyRules)):
 				defaultEnablers[index][dir.value] = len(adjacencyRules[index][dir.value])
+		
+		threads = [None, None, None, None]
+		for dir in Direction:
+			threads[dir.value] = Thread(target=initDirection, args=(adjacencyRules, defaultEnablers, dir))
+			threads[dir.value].start()
+		
+		for dir in Direction:
+			threads[dir.value].join()
 		
 		return defaultEnablers

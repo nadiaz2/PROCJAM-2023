@@ -30,21 +30,22 @@ def _runGeneration(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[
 	tileGrid = Grid(outputSize[0], outputSize[1], adjacencyRules, frequencyRules, seed)
 	removalStack: list[RemovalUpdate] = []
 
-	collapsingCell = 0
 	totalCells = outputSize[0]*outputSize[1]
 
 	for item in tileGrid.heap:
 		x, y = item.coord
 		cell = tileGrid.cells[x][y]
+		if(tileGrid.cellsCollapsed >= totalCells):
+			break
 		if(cell.collapsed):
 			continue
 		
-		if(printOutput):
-			collapsingCell += 1
-			print(f'Collapsing Cell: {collapsingCell} / {totalCells}', end="\r", flush=True)
-		
 		# Collapse chosen cell
 		oldPossible = cell.possible
+		tileGrid.cellsCollapsed += 1
+		if(printOutput):
+			print(f'Collapsing Cell: {tileGrid.cellsCollapsed} / {totalCells}', end="\r", flush=True)
+
 		success = cell.collapse(frequencyRules)
 		if(not success):
 			raise ContradictionException("A cell ran out of possibilities during generation.")

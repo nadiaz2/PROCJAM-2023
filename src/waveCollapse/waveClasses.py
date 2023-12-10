@@ -106,11 +106,13 @@ class Grid:
 	"""The entire grid of cells. Contains redundant information to make access easier (ex. size)"""
 	cells: list[list[TileCell]]
 	size: tuple[int,int]
+	cellsCollapsed: int
 	heap: EntropyHeap
 	seed: int
 
 	def __init__(self, width: int, height: int, adjacencyRules: list[tuple(list[int])], frequencyHints: list[int], given_seed: int = None):
 		self.size = (width, height)
+		self.cellsCollapsed = 0
 		self.cells = [[None for i in range(height)] for j in range(width)]
 		self.heap = EntropyHeap()
 		
@@ -154,7 +156,7 @@ class Grid:
 		# enables tile_b to be placed on its left, then tile_b must also enable tile_a to be placed
 		# on its right. Therefore the number of tiles that tile_a enables in a given direction is equal
 		# to the number of tiles that enable it from the opposite direction.
-		for index in range(tile_count):
+		for index in range(len(adjacencyRules)):
 			for dir in Direction:
 				defaultEnablers[index][dir.value] = len(adjacencyRules[index][dir.value])
 		

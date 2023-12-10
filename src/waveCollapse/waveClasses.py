@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 from heapq import heappush, heappop
 import random
-from waveExceptions import *
+from waveCollapse.waveExceptions import *
 from math import log2
 from copy import deepcopy
 import time
-import sys
-sys.path.append('src/utils')
-from direction import Direction
+from utils.direction import Direction
 
 
 

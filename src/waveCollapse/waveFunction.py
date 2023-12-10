@@ -2,9 +2,7 @@
 # We drew heavy insperation from this article and used the author's Rust code as a basis for our implementation.
 # https://www.gridbugs.org/wave-function-collapse/
 
-import sys
-sys.path.append('src/waveCollapse')
-from waveClasses import *
+from waveCollapse.waveClasses import *
 
 
 def wfc_core(adjacencyRules: list[tuple[list[int]]], frequencyRules: list[int], outputSize: tuple[int,int], seed: int = None, printOutput: bool = False) -> list[list[int]]:
@@ -78,8 +76,6 @@ def _getNeighborSet(coord: tuple[int,int], gridSize: tuple[int,int]) -> list[tup
 		
 		return True
 
-	offsets = [(Direction.LEFT, (-1,0)), (Direction.RIGHT, (1,0)), (Direction.UP, (0,-1)), (Direction.DOWN, (0,1))]
-	neighbors = [(dir, (coord[0]+x, coord[1]+y)) for dir,(x,y) in offsets]
 	offsets = [(Direction.LEFT, (-1,0)), (Direction.RIGHT, (1,0)), (Direction.UP, (0,-1)), (Direction.DOWN, (0,1))]
 	neighbors = [(dir, (coord[0]+x, coord[1]+y)) for dir,(x,y) in offsets]
 	neighbors = list(filter(inBounds, neighbors))

@@ -1,9 +1,7 @@
 from PIL import Image
 from math import floor
 from copy import deepcopy
-import sys
-sys.path.append('src/utils')
-from direction import Direction
+from utils.direction import Direction
 
 def Main ():
 	...
